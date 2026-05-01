@@ -2,21 +2,39 @@
 import { Image } from 'astro:assets';
 import { photos } from '../data/photos.ts';
 
-// The hero photo. The dark droplet is gorgeous and sets the tone.
-const heroPhoto = photos.find((p) => p.id === '24')!;
+// Two photos blended together for a fire/bokeh hybrid
+const baseLayer = photos.find((p) => p.id === '08')!;  // Bokeh weather (feather + droplets)
+const fireLayer = photos.find((p) => p.id === '15')!;  // Daisies on fire (warm sunset)
 ---
 
 <section class="hero">
   <div class="hero-image">
-    <Image
-      src={heroPhoto.src}
-      alt={heroPhoto.title}
-      widths={[800, 1200, 1800, 2400]}
-      sizes="100vw"
-      loading="eager"
-      format="webp"
-      quality={88}
-    />
+    <!-- Base layer: bokeh feather (cooler tones, softer) -->
+    <div class="layer base">
+      <Image
+        src={baseLayer.src}
+        alt={baseLayer.title}
+        widths={[800, 1200, 1800, 2400]}
+        sizes="100vw"
+        loading="eager"
+        format="webp"
+        quality={88}
+      />
+    </div>
+
+    <!-- Fire layer: daisies sunset (blended on top) -->
+    <div class="layer fire">
+      <Image
+        src={fireLayer.src}
+        alt={fireLayer.title}
+        widths={[800, 1200, 1800, 2400]}
+        sizes="100vw"
+        loading="eager"
+        format="webp"
+        quality={88}
+      />
+    </div>
+
     <div class="vignette"></div>
   </div>
 
@@ -57,10 +75,10 @@ const heroPhoto = photos.find((p) => p.id === '24')!;
     </div>
   </div>
 
-  <!-- attribution badge for the hero photo -->
+  <!-- attribution badge -->
   <div class="hero-credit">
-    <span class="num">No. {heroPhoto.id}</span>
-    <span class="title"><em>{heroPhoto.title}</em></span>
+    <span class="num">Composite · No. {baseLayer.id} + {fireLayer.id}</span>
+    <span class="title"><em>Where rain meets fire.</em></span>
   </div>
 </section>
 
@@ -73,56 +91,93 @@ const heroPhoto = photos.find((p) => p.id === '24')!;
     height: 100vh;
     min-height: 640px;
     overflow: hidden;
+    background: $ink; // fallback while images load
   }
 
   .hero-image {
     position: absolute;
     inset: 0;
     z-index: 1;
+    isolation: isolate; // contains blend-modes to this stack only
+  }
+
+  // Both layers fill the hero
+  .layer {
+    position: absolute;
+    inset: 0;
 
     :global(img) {
       width: 100%;
       height: 100%;
       object-fit: cover;
       object-position: center;
-      animation: heroBreathe 16s ease-in-out infinite alternate;
     }
   }
 
-  // Subtle, slow zoom — makes the hero feel alive, like the camera is breathing
-  @keyframes heroBreathe {
+  // Base: feather + droplets. Slightly desaturated, slow drift left.
+  .base {
+    z-index: 1;
+
+    :global(img) {
+      filter: saturate(0.7) brightness(0.85);
+      animation: driftLeft 30s ease-in-out infinite alternate;
+    }
+  }
+
+  // Fire: daisies sunset. Blended via screen mode so highlights bleed through.
+  // 'screen' makes light pixels show through, 'soft-light' would be more subtle.
+  .fire {
+    z-index: 2;
+    mix-blend-mode: screen;
+    opacity: 0.85;
+
+    :global(img) {
+      filter: saturate(1.2) contrast(1.1) brightness(1.0);
+      animation: driftRight 26s ease-in-out infinite alternate;
+    }
+  }
+
+  // Subtle drift animations — opposite directions create depth
+  @keyframes driftLeft {
     from {
-      transform: scale(1);
+      transform: scale(1.04) translateX(-1%);
     }
     to {
-      transform: scale(1.06);
+      transform: scale(1.08) translateX(1.5%);
+    }
+  }
+  @keyframes driftRight {
+    from {
+      transform: scale(1.06) translateX(1%);
+    }
+    to {
+      transform: scale(1.1) translateX(-1.5%);
     }
   }
 
   .vignette {
     position: absolute;
     inset: 0;
-    z-index: 2;
+    z-index: 3;
     pointer-events: none;
     background:
       // dark fade at top to make the nav readable
-      linear-gradient(to bottom, rgba(10, 8, 7, 0.85) 0%, rgba(10, 8, 7, 0.2) 25%, transparent 45%),
+      linear-gradient(to bottom, rgba(10, 8, 7, 0.85) 0%, rgba(10, 8, 7, 0.3) 25%, transparent 50%),
       // dark fade at bottom for text legibility + section transition
-      linear-gradient(to top, rgba(10, 8, 7, 0.95) 0%, rgba(10, 8, 7, 0.7) 20%, transparent 55%),
+      linear-gradient(to top, rgba(10, 8, 7, 0.95) 0%, rgba(10, 8, 7, 0.7) 25%, transparent 60%),
       // very subtle vignette on the sides
-      radial-gradient(ellipse at center, transparent 40%, rgba(10, 8, 7, 0.5) 100%);
+      radial-gradient(ellipse at center, transparent 35%, rgba(10, 8, 7, 0.55) 100%);
   }
 
   .hero-content {
     position: absolute;
     inset: 0;
-    z-index: 3;
+    z-index: 4;
     display: flex;
     align-items: flex-end;
     padding-bottom: $s-9;
-    pointer-events: none; // so the hero image is still clickable underneath
+    pointer-events: none;
 
-    // re-enable pointer events on actual content
     .container > * {
       pointer-events: auto;
     }
@@ -143,7 +198,7 @@ const heroPhoto = photos.find((p) => p.id === '24')!;
     margin-bottom: $s-5;
     color: $bone;
     max-width: 14ch;
-    text-shadow: 0 4px 30px rgba(0, 0, 0, 0.6);
+    text-shadow: 0 4px 30px rgba(0, 0, 0, 0.7);
 
     .line {
       display: block;
@@ -177,10 +232,9 @@ const heroPhoto = photos.find((p) => p.id === '24')!;
     font-size: 18px;
     line-height: 1.6;
     color: $bone;
-    opacity: 0.85;
     max-width: 540px;
     margin-bottom: $s-7;
-    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.7);
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.8);
     opacity: 0;
     animation: fadeIn 1s $ease-out 0.6s forwards;
 
@@ -192,7 +246,7 @@ const heroPhoto = photos.find((p) => p.id === '24')!;
 
   @keyframes fadeIn {
     to {
-      opacity: 0.85;
+      opacity: 0.9;
     }
   }
 
@@ -268,7 +322,6 @@ const heroPhoto = photos.find((p) => p.id === '24')!;
     }
   }
 
-  // small caption tag in the corner, like a museum label
   .hero-credit {
     position: absolute;
     top: 50%;
@@ -280,7 +333,7 @@ const heroPhoto = photos.find((p) => p.id === '24')!;
     gap: $s-4;
     align-items: baseline;
     color: $bone;
-    opacity: 0.6;
+    opacity: 0.55;
 
     .num {
       font-family: $mono;
