@@ -1,15 +1,13 @@
 // Add `.is-visible` to elements as they enter the viewport.
-// Photos use clip-path for a cinematic reveal; everything else uses opacity+translate.
-//
-// IMPORTANT: We add the .reveal-clip class via JS (not in HTML) so that:
-// 1. Photos render normally if JS fails or is disabled (graceful degradation)
-// 2. Photos already in viewport on first paint don't flash hidden
+// Simple, reliable: opacity + slight translate. No clip-path tricks.
 
 export const initReveal = (): void => {
-  const photoTargets = document.querySelectorAll<HTMLElement>('.feat, .arc');
-  const textTargets = document.querySelectorAll<HTMLElement>('.section-head, h2, .lede, .meta, .about-text, .facts');
+  const targets = document.querySelectorAll<HTMLElement>(
+    '.feat, .arc, .section-head, h2, .lede, .meta, .about-text, .facts'
+  );
 
-  if (!('IntersectionObserver' in window)) {
+  if (!('IntersectionObserver' in window) || targets.length === 0) {
+    targets.forEach((el) => el.classList.add('is-visible'));
     return;
   }
 
@@ -19,21 +17,11 @@ export const initReveal = (): void => {
     return r.top < window.innerHeight && r.bottom > 0;
   };
 
-  // For photos: add .reveal-clip ONLY if they're below the fold.
-  // Photos already on screen show immediately (no flash, no race).
-  photoTargets.forEach((el) => {
-    if (!inViewport(el)) {
-      el.classList.add('reveal-clip');
-    } else {
-      el.classList.add('reveal-clip', 'is-visible');
-    }
-  });
-
-  textTargets.forEach((el) => {
-    if (!inViewport(el)) {
-      el.classList.add('reveal');
-    } else {
-      el.classList.add('reveal', 'is-visible');
+  // Add reveal class. Items already in view get .is-visible immediately.
+  targets.forEach((el) => {
+    el.classList.add('reveal');
+    if (inViewport(el)) {
+      el.classList.add('is-visible');
     }
   });
 
@@ -49,5 +37,5 @@ export const initReveal = (): void => {
     { threshold: 0.05, rootMargin: '0px 0px -5% 0px' }
   );
 
-  [...photoTargets, ...textTargets].forEach((el) => observer.observe(el));
+  targets.forEach((el) => observer.observe(el));
 };
