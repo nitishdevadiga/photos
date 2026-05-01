@@ -2,397 +2,601 @@
 import { Image } from 'astro:assets';
 import { photos } from '../data/photos.ts';
 
-// The "paper" being torn (covers the whole hero): daisies on fire
-const paperPhoto = photos.find((p) => p.id === '15')!;
-// What's underneath, visible through the torn strip: ant photo (B&W)
-const underPhoto = photos.find((p) => p.id === '05')!;
+// Pick the photos that anchor each fragment of the collage.
+// All references are by id so reordering data/photos.ts won't break the hero.
+const get = (id: string) => {
+  const p = photos.find((x) => x.id === id);
+  if (!p) throw new Error(`Hero collage: photo id ${id} not found`);
+  return p;
+};
+
+const fragBase    = get('15'); // big anchor — sunset daisies, color, warm
+const fragAnt     = get('05'); // overlapping slab — ant macro, B&W
+const fragRose    = get('09'); // small color inset — rose
+const fragFire    = get('19'); // left slab — burning landscape
+const fragLeaves  = get('14'); // bottom strip — backlit leaves
+const fragFeather = get('16'); // top-left small — feather (already mono)
+const fragDroplet = get('24'); // small circle — droplet on leaf
+const fragPattern = get('11'); // tiny accent — pattern
 ---
 
 <section class="hero">
-  <div class="hero-image">
-    <!-- BOTTOM: ant photo, B&W, fills the entire hero. -->
-    <!-- It only becomes visible inside the torn strip; everything else is covered by paper. -->
-    <div class="under-layer">
+  <!-- ============== COLLAGE STAGE ============== -->
+  <div class="stage" aria-hidden="false">
+
+    <!-- Base: big sunset daisies, color, anchors center -->
+    <div class="frag frag-base" data-rise="1">
       <Image
-        src={underPhoto.src}
-        alt={underPhoto.title}
-        widths={[800, 1200, 1800]}
-        sizes="100vw"
+        src={fragBase.src}
+        alt={fragBase.title}
+        widths={[400, 600, 800]}
+        sizes="(max-width: 900px) 60vw, 340px"
         loading="eager"
         format="webp"
         quality={88}
       />
     </div>
 
-    <!-- TOP "paper" (daisies) with a horizontal strip torn out of the middle.
-         Built as two halves: top piece + bottom piece, with empty space between. -->
-    <div class="paper-top">
+    <!-- B&W ant slab — pushes into right side of base -->
+    <div class="frag frag-ant" data-rise="2">
       <Image
-        src={paperPhoto.src}
-        alt=""
-        widths={[800, 1200, 1800, 2400]}
-        sizes="100vw"
+        src={fragAnt.src}
+        alt={fragAnt.title}
+        widths={[300, 500]}
+        sizes="200px"
         loading="eager"
         format="webp"
-        quality={88}
+        quality={86}
       />
     </div>
 
-    <div class="paper-bottom">
+    <!-- Color rose inset — sits on top-right of ant -->
+    <div class="frag frag-rose" data-rise="3">
       <Image
-        src={paperPhoto.src}
-        alt=""
-        widths={[800, 1200, 1800, 2400]}
-        sizes="100vw"
+        src={fragRose.src}
+        alt={fragRose.title}
+        widths={[200, 350]}
+        sizes="140px"
         loading="eager"
         format="webp"
-        quality={88}
+        quality={85}
       />
     </div>
 
-    <!-- The torn deckle edges (SVG). Two ragged lines: one on top, one on bottom. -->
-    <svg class="tear-edges" viewBox="0 0 1600 900" preserveAspectRatio="none" aria-hidden="true">
-      <defs>
-        <!-- Roughen filter: turbulence + displacement creates the fibrous deckle -->
-        <filter id="deckle" x="-2%" y="-50%" width="104%" height="200%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.025 0.04" numOctaves="3" seed="7" />
-          <feDisplacementMap in="SourceGraphic" scale="14" />
-        </filter>
-        <!-- Drop shadow under the upper torn edge (paper sitting on photo) -->
-        <filter id="topShadow" x="-5%" y="0%" width="110%" height="300%">
-          <feGaussianBlur in="SourceAlpha" stdDeviation="6" />
-          <feOffset dx="0" dy="6" />
-          <feFlood flood-color="#000" flood-opacity="0.6" />
-          <feComposite in2="SourceAlpha" operator="in" />
-          <feMerge>
-            <feMergeNode />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-        <!-- Inverted drop shadow for the bottom torn edge -->
-        <filter id="bottomShadow" x="-5%" y="-200%" width="110%" height="300%">
-          <feGaussianBlur in="SourceAlpha" stdDeviation="6" />
-          <feOffset dx="0" dy="-6" />
-          <feFlood flood-color="#000" flood-opacity="0.6" />
-          <feComposite in2="SourceAlpha" operator="in" />
-          <feMerge>
-            <feMergeNode />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
+    <!-- Fire/orange — left slab pushing into base -->
+    <div class="frag frag-fire" data-rise="2">
+      <Image
+        src={fragFire.src}
+        alt={fragFire.title}
+        widths={[250, 400]}
+        sizes="180px"
+        loading="eager"
+        format="webp"
+        quality={86}
+      />
+      <span class="frag-label frag-label--diff">19 · fire</span>
+    </div>
 
-      <!-- Top edge — bone-white deckle line on bottom of upper paper piece -->
-      <path class="edge-top" filter="url(#deckle)"
-        d="M -10,425
-           Q 80,432 160,418
-           T 320,425
-           T 480,420
-           T 640,430
-           T 800,418
-           T 960,428
-           T 1120,420
-           T 1280,432
-           T 1440,420
-           T 1610,428
-           L 1610,440 L -10,440 Z"
-        fill="#ede5d8"
-        opacity="0.92" />
+    <!-- Leaves strip — pushes UP from bottom into base -->
+    <div class="frag frag-leaves" data-rise="3">
+      <Image
+        src={fragLeaves.src}
+        alt={fragLeaves.title}
+        widths={[200, 350]}
+        sizes="150px"
+        loading="lazy"
+        format="webp"
+        quality={85}
+      />
+      <span class="frag-label">14 · leaves</span>
+    </div>
 
-      <!-- Bottom edge — bone-white deckle line on top of lower paper piece -->
-      <path class="edge-bottom" filter="url(#deckle)"
-        d="M -10,572
-           Q 80,565 160,580
-           T 320,575
-           T 480,582
-           T 640,572
-           T 800,585
-           T 960,575
-           T 1120,582
-           T 1280,570
-           T 1440,580
-           T 1610,572
-           L 1610,558 L -10,558 Z"
-        fill="#ede5d8"
-        opacity="0.92" />
-    </svg>
+    <!-- Feather — small top-left, slight rotate -->
+    <div class="frag frag-feather" data-rise="2">
+      <Image
+        src={fragFeather.src}
+        alt={fragFeather.title}
+        widths={[180, 300]}
+        sizes="120px"
+        loading="lazy"
+        format="webp"
+        quality={84}
+      />
+    </div>
 
-    <div class="vignette"></div>
+    <!-- Droplet — small circular crop, pressed into ant's bottom-right -->
+    <div class="frag frag-droplet" data-rise="4">
+      <Image
+        src={fragDroplet.src}
+        alt={fragDroplet.title}
+        widths={[150, 250]}
+        sizes="90px"
+        loading="lazy"
+        format="webp"
+        quality={84}
+      />
+    </div>
+
+    <!-- Pattern — small slab pressed below fire, slight rotate -->
+    <div class="frag frag-pattern" data-rise="4">
+      <Image
+        src={fragPattern.src}
+        alt={fragPattern.title}
+        widths={[150, 250]}
+        sizes="110px"
+        loading="lazy"
+        format="webp"
+        quality={84}
+      />
+    </div>
+
+    <!-- Solid rust block with "briefly" — design element -->
+    <div class="frag frag-rust" data-rise="3">
+      <span><em>briefly</em></span>
+    </div>
+
+    <!-- Yellow circle — "23 photographs" stat fragment -->
+    <div class="frag frag-circle" data-rise="3">
+      <div class="circle-num">23</div>
+      <div class="circle-lbl">photographs</div>
+    </div>
+
+    <!-- Barcode sticker — yellow, pressed below circle -->
+    <div class="frag frag-barcode" data-rise="4">
+      <div class="bars" aria-hidden="true"></div>
+      <span class="bc-text">FIELD-25 · 2024—2025</span>
+    </div>
+
+    <!-- Quote card — translucent, pressed against ant's right -->
+    <div class="frag frag-quote" data-rise="3">
+      <span class="quote-eyebrow">No. 15 · index</span>
+      <p class="quote-body"><em>"What grows through the burning."</em></p>
+      <span class="quote-foot">2024 — 2025</span>
+    </div>
+
   </div>
 
-  <div class="hero-content">
-    <div class="container">
-      <p class="eyebrow">Photographs · 2024 — 2025</p>
-      <h1>
-        <span class="line">Light, held</span>
-        <span class="line"><em>briefly.</em></span>
-      </h1>
-      <p class="lede">
-        A field journal by <strong>Nitish Devadiga</strong> — quiet macro,
-        burning landscapes, dark rooms, and a few things that asked to be
-        photographed before disappearing.
-      </p>
-
-      <div class="hero-meta-row">
-        <div class="meta">
-          <div>
-            <span class="num">23</span>
-            <span class="lbl">photographs</span>
-          </div>
-          <div>
-            <span class="num">07</span>
-            <span class="lbl">moods</span>
-          </div>
-          <div>
-            <span class="num">02</span>
-            <span class="lbl">years</span>
-          </div>
-        </div>
-
-        <a class="scroll-cue" href="#featured">
-          <span>Begin</span>
-          <span class="arrow">↓</span>
-        </a>
-      </div>
-    </div>
+  <!-- ============== TYPE OVERLAY ============== -->
+  <!-- Title: top-left, partially adjacent to the collage -->
+  <div class="hero-title">
+    <p class="eyebrow">Photographs · 2024 — 2025</p>
+    <h1>
+      <span class="line">Light,</span>
+      <span class="line">held</span>
+      <span class="line"><em>briefly.</em></span>
+    </h1>
   </div>
 
-  <!-- attribution badge -->
-  <div class="hero-credit">
-    <span class="num">Through · No. {paperPhoto.id} / {underPhoto.id}</span>
-    <span class="title"><em>What grows through the burning.</em></span>
+  <!-- Lede + CTA: top-right, pressed against the collage's right edge -->
+  <div class="hero-lede">
+    <p>
+      A field journal by <strong>Nitish Devadiga</strong> — twenty-three frames
+      pulled from two years of looking, arranged by mood.
+    </p>
+    <a class="scroll-cue" href="#featured">
+      <span>Begin</span>
+      <span class="arrow">↓</span>
+    </a>
+  </div>
+
+  <!-- Stat strap across the bottom -->
+  <div class="hero-strap">
+    <div class="stats">
+      <div><span class="lbl">moods</span><span class="num">07</span></div>
+      <div><span class="lbl">years</span><span class="num">02</span></div>
+      <div><span class="lbl">featured</span><span class="num">{photos.filter(p => p.featured).length.toString().padStart(2,'0')}</span></div>
+    </div>
+    <span class="strap-meta">A field journal · No. 15 / {photos.length}</span>
   </div>
 </section>
 
 <style lang="scss">
   @use '../styles/tokens' as *;
 
+  // ============================================================
+  // SECTION SHELL
+  // ============================================================
   .hero {
     position: relative;
     width: 100%;
-    height: 100vh;
-    min-height: 640px;
+    min-height: 100vh;
     overflow: hidden;
     background: $ink;
-  }
+    padding: $s-9 0 $s-7;
 
-  .hero-image {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-  }
-
-  // BOTTOM: ant photo, B&W, no zoom, kept simple.
-  // Visible only through the torn strip in the middle.
-  .under-layer {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-
-    :global(img) {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      // Object-position pulls the ant up so it's visible through the middle strip
-      object-position: center 40%;
-      // Black & white treatment with strong contrast
-      filter: grayscale(1) contrast(1.15) brightness(0.95);
-      // No zoom, no animation. Simple, still.
+    @include mobile {
+      min-height: auto;
+      padding: $s-7 0 $s-6;
     }
   }
 
-  // TOP HALF of paper: daisies image, clipped to the upper region only,
-  // ending at a ragged horizontal line ~47% down the screen.
-  .paper-top {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    // clip-path creates a ragged bottom edge with hand-tuned irregularity
-    clip-path: polygon(
-      0 0, 100% 0, 100% 0,
-      // bottom edge — moves left to right with random vertical jitter
-      100% 47%, 96% 48%, 92% 46%, 88% 49%, 84% 47%, 80% 48%,
-      76% 46%, 72% 49%, 68% 47%, 64% 48%, 60% 46%, 56% 49%,
-      52% 47%, 48% 49%, 44% 46%, 40% 48%, 36% 47%, 32% 49%,
-      28% 46%, 24% 48%, 20% 47%, 16% 49%, 12% 46%, 8% 48%, 4% 47%, 0 48%
-    );
+  // ============================================================
+  // COLLAGE STAGE — fixed-canvas centered, fragments positioned absolutely
+  // The stage is a defined area within the hero so percentages stay coherent.
+  // ============================================================
+  .stage {
+    position: relative;
+    width: min(960px, calc(100% - #{$s-6} * 2));
+    margin: 0 auto;
+    aspect-ratio: 960 / 720;
+    pointer-events: none; // type sits above; collage is decorative
 
-    :global(img) {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center;
-      filter: saturate(1.05);
+    @include mobile {
+      aspect-ratio: 360 / 480;
+      margin-bottom: $s-5;
     }
   }
 
-  // BOTTOM HALF of paper: daisies image, clipped to lower region only,
-  // starting at a ragged horizontal line ~63% down the screen.
-  .paper-bottom {
+  .frag {
     position: absolute;
-    inset: 0;
-    z-index: 2;
-    clip-path: polygon(
-      0 64%, 4% 63%, 8% 65%, 12% 64%, 16% 62%, 20% 64%,
-      24% 63%, 28% 65%, 32% 63%, 36% 64%, 40% 62%, 44% 64%,
-      48% 63%, 52% 65%, 56% 62%, 60% 64%, 64% 63%, 68% 65%,
-      72% 63%, 76% 64%, 80% 62%, 84% 64%, 88% 63%, 92% 65%,
-      96% 63%, 100% 65%,
-      100% 100%, 0 100%
-    );
+    overflow: hidden;
+    will-change: transform, opacity;
+    opacity: 0;
+    transform: translateY(24px);
+    animation: fragRise 1.1s $ease-out forwards;
+
+    // Cascade rise order via data-rise=1..4
+    &[data-rise='1'] { animation-delay: 0.05s; }
+    &[data-rise='2'] { animation-delay: 0.18s; }
+    &[data-rise='3'] { animation-delay: 0.30s; }
+    &[data-rise='4'] { animation-delay: 0.42s; }
 
     :global(img) {
       width: 100%;
       height: 100%;
       object-fit: cover;
       object-position: center;
-      filter: saturate(1.05);
-    }
-  }
-
-  // SVG with the white deckle edges + drop shadows
-  .tear-edges {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 3;
-    pointer-events: none;
-  }
-
-  .vignette {
-    position: absolute;
-    inset: 0;
-    z-index: 4;
-    pointer-events: none;
-    background:
-      linear-gradient(to bottom, rgba(10, 8, 7, 0.85) 0%, rgba(10, 8, 7, 0.3) 22%, transparent 45%),
-      linear-gradient(to top, rgba(10, 8, 7, 0.95) 0%, rgba(10, 8, 7, 0.7) 22%, transparent 55%),
-      radial-gradient(ellipse at center, transparent 35%, rgba(10, 8, 7, 0.55) 100%);
-  }
-
-  .hero-content {
-    position: absolute;
-    inset: 0;
-    z-index: 5;
-    display: flex;
-    align-items: flex-end;
-    padding-bottom: $s-9;
-    pointer-events: none;
-
-    .container > * {
-      pointer-events: auto;
-    }
-  }
-
-  .eyebrow {
-    margin-bottom: $s-5;
-    color: $bone;
-    opacity: 0.7;
-  }
-
-  h1 {
-    font-family: $serif;
-    font-size: clamp(64px, 11vw, 180px);
-    font-weight: 300;
-    line-height: 0.92;
-    letter-spacing: -0.04em;
-    margin-bottom: $s-5;
-    color: $bone;
-    max-width: 14ch;
-    text-shadow: 0 4px 30px rgba(0, 0, 0, 0.7);
-
-    .line {
       display: block;
-      opacity: 0;
-      transform: translateY(30px);
-      animation: rise 1s $ease-out forwards;
+    }
+  }
 
-      &:nth-child(1) {
-        animation-delay: 0.15s;
-      }
-      &:nth-child(2) {
-        animation-delay: 0.35s;
-      }
+  @keyframes fragRise {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  // Per-fragment positions, sizes, z-orders.
+  // Percentages are against the .stage box, so the whole composition
+  // scales together rather than drifting apart on different viewports.
+
+  // 1) BASE: big sunset daisies — center anchor
+  .frag-base {
+    left: 32%;
+    top: 18%;
+    width: 38%;
+    height: 62%;
+    z-index: 2;
+    box-shadow: 0 1px 0 rgba(237,229,216,0.08), 0 24px 60px rgba(0,0,0,0.7);
+  }
+
+  // 2) ANT (B&W) — overlaps right side of base by ~6%
+  .frag-ant {
+    left: 56%;
+    top: 12%;
+    width: 22%;
+    height: 42%;
+    z-index: 5;
+    box-shadow: 0 1px 0 rgba(237,229,216,0.08), 0 16px 40px rgba(0,0,0,0.65);
+    :global(img) {
+      filter: grayscale(1) contrast(1.12) brightness(0.92);
+    }
+  }
+
+  // 3) ROSE — sits ON TOP of ant's top-right corner, kisses the rust block
+  .frag-rose {
+    left: 62%;
+    top: 8%;
+    width: 16%;
+    height: 14%;
+    z-index: 7;
+    box-shadow: 0 1px 0 rgba(237,229,216,0.08), 0 14px 32px rgba(0,0,0,0.6);
+  }
+
+  // 4) FIRE — overlaps base's LEFT side by ~6% (used to be a gap)
+  .frag-fire {
+    left: 26%;
+    top: 36%;
+    width: 19%;
+    height: 28%;
+    z-index: 6;
+    box-shadow: 0 1px 0 rgba(237,229,216,0.08), 0 14px 32px rgba(0,0,0,0.6);
+  }
+
+  // 5) LEAVES — pushes up from bottom into base, overlap by ~8%
+  .frag-leaves {
+    left: 40%;
+    top: 60%;
+    width: 16%;
+    height: 30%;
+    z-index: 8;
+    box-shadow: 0 -1px 0 rgba(237,229,216,0.08), 0 -8px 28px rgba(0,0,0,0.55);
+  }
+
+  // 6) FEATHER — top-left small, rotated, kisses fire's top
+  .frag-feather {
+    left: 19%;
+    top: 24%;
+    width: 13%;
+    height: 19%;
+    z-index: 4;
+    box-shadow: 0 1px 0 rgba(237,229,216,0.08), 0 12px 28px rgba(0,0,0,0.55);
+    transform-origin: center;
+    transform: rotate(-3deg);
+    animation-name: fragRiseRotate1;
+  }
+  @keyframes fragRiseRotate1 {
+    from { opacity: 0; transform: rotate(-3deg) translateY(24px); }
+    to   { opacity: 1; transform: rotate(-3deg) translateY(0); }
+  }
+
+  // 7) DROPLET — small circle, OVERLAPS ant's bottom-right corner
+  .frag-droplet {
+    left: 67%;
+    top: 46%;
+    width: 10%;
+    height: 13%;
+    z-index: 9;
+    border-radius: 50%;
+    box-shadow: 0 1px 0 rgba(237,229,216,0.1), 0 8px 22px rgba(0,0,0,0.55);
+  }
+
+  // 8) PATTERN — small slab below fire, rotated, kisses circle's left
+  .frag-pattern {
+    left: 17%;
+    top: 70%;
+    width: 12%;
+    height: 14%;
+    z-index: 7;
+    box-shadow: 0 1px 0 rgba(237,229,216,0.08), 0 8px 22px rgba(0,0,0,0.5);
+    transform: rotate(2deg);
+    animation-name: fragRiseRotate2;
+  }
+  @keyframes fragRiseRotate2 {
+    from { opacity: 0; transform: rotate(2deg) translateY(24px); }
+    to   { opacity: 1; transform: rotate(2deg) translateY(0); }
+  }
+
+  // 9) RUST — solid block, pressed into right of ant
+  .frag-rust {
+    left: 76%;
+    top: 36%;
+    width: 14%;
+    height: 11%;
+    z-index: 9;
+    background: $rust;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 0 rgba(237,229,216,0.1), 0 10px 24px rgba(0,0,0,0.5);
+    span {
+      font-family: $serif;
+      font-size: clamp(18px, 2vw, 26px);
+      color: $ink;
+      letter-spacing: -0.02em;
+      em { font-style: italic; }
+    }
+  }
+
+  // 10) YELLOW CIRCLE — overlaps fire's left edge AND leaves
+  .frag-circle {
+    left: 13%;
+    top: 56%;
+    width: 17%;
+    height: 22%;
+    z-index: 10;
+    border-radius: 50%;
+    background: #e8c44a;
+    color: $ink;
+    box-shadow: 0 1px 0 rgba(237,229,216,0.12), 0 14px 32px rgba(0,0,0,0.45);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+
+    .circle-num {
+      font-family: $serif;
+      font-size: clamp(28px, 3.6vw, 44px);
+      font-weight: 300;
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+    .circle-lbl {
+      font-family: $mono;
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      opacity: 0.7;
+      margin-top: 4px;
+    }
+  }
+
+  // 11) BARCODE — pressed below the circle
+  .frag-barcode {
+    left: 28%;
+    top: 78%;
+    width: 17%;
+    height: 8%;
+    z-index: 11;
+    background: #e8c44a;
+    padding: 8px 12px;
+    color: $ink;
+    box-shadow: 0 1px 0 rgba(237,229,216,0.1), 0 8px 22px rgba(0,0,0,0.45);
+    transform: rotate(-1.5deg);
+    animation-name: fragRiseRotate3;
+
+    .bars {
+      height: 18px;
+      background-image: repeating-linear-gradient(
+        to right,
+        $ink 0 2px, transparent 2px 3px,
+        $ink 3px 4px, transparent 4px 7px,
+        $ink 7px 10px, transparent 10px 11px,
+        $ink 11px 12px, transparent 12px 14px,
+        $ink 14px 17px, transparent 17px 18px
+      );
+    }
+    .bc-text {
+      display: block;
+      font-family: $mono;
+      font-size: 8px;
+      letter-spacing: 0.12em;
+      font-weight: 500;
+      margin-top: 4px;
+    }
+  }
+  @keyframes fragRiseRotate3 {
+    from { opacity: 0; transform: rotate(-1.5deg) translateY(24px); }
+    to   { opacity: 1; transform: rotate(-1.5deg) translateY(0); }
+  }
+
+  // 12) QUOTE CARD — translucent, pressed against right of ant
+  .frag-quote {
+    left: 81%;
+    top: 14%;
+    width: 17%;
+    height: 22%;
+    z-index: 12;
+    background: rgba($bone, 0.08);
+    border: 0.5px solid rgba($bone, 0.22);
+    backdrop-filter: blur(8px);
+    padding: $s-4;
+    color: $bone;
+    display: flex;
+    flex-direction: column;
+
+    .quote-eyebrow,
+    .quote-foot {
+      font-family: $mono;
+      font-size: 9px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+    }
+    .quote-eyebrow { opacity: 0.55; margin-bottom: $s-2; }
+    .quote-foot    { opacity: 0.45; margin-top: auto; font-size: 8px; }
+    .quote-body {
+      font-family: $serif;
+      font-size: clamp(11px, 1.3vw, 14px);
+      line-height: 1.45;
+      font-style: italic;
+      opacity: 0.9;
+      margin: 0;
+    }
+  }
+
+  // ============================================================
+  // FRAGMENT LABELS (small mono captions anchored inside fragments)
+  // ============================================================
+  .frag-label {
+    position: absolute;
+    bottom: 8px;
+    right: 10px;
+    color: $bone;
+    opacity: 0.85;
+    font-family: $mono;
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    pointer-events: none;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  }
+  .frag-label--diff {
+    top: 8px;
+    left: 10px;
+    bottom: auto;
+    right: auto;
+    mix-blend-mode: difference;
+    text-shadow: none;
+  }
+
+  // ============================================================
+  // TYPE OVERLAY
+  // ============================================================
+  .hero-title {
+    position: absolute;
+    top: $s-9;
+    left: $s-6;
+    max-width: 22rem;
+    z-index: 20;
+    pointer-events: none;
+
+    @include mobile {
+      position: static;
+      max-width: 100%;
+      padding: 0 $s-5;
+      margin-bottom: $s-5;
     }
 
-    em {
-      font-style: italic;
-      font-weight: 400;
-      color: $rust;
+    .eyebrow {
+      font-family: $mono;
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: $bone;
+      opacity: 0.7;
+      margin: 0 0 $s-4;
+    }
+
+    h1 {
+      font-family: $serif;
+      font-size: clamp(56px, 7.5vw, 96px);
+      font-weight: 300;
+      line-height: 0.9;
+      letter-spacing: -0.04em;
+      margin: 0;
+      color: $bone;
+      text-shadow: 0 4px 30px rgba(0, 0, 0, 0.85);
+
+      .line {
+        display: block;
+        opacity: 0;
+        transform: translateY(30px);
+        animation: rise 1s $ease-out forwards;
+        &:nth-child(1) { animation-delay: 0.1s; }
+        &:nth-child(2) { animation-delay: 0.25s; }
+        &:nth-child(3) { animation-delay: 0.4s; }
+      }
+      em {
+        font-style: italic;
+        font-weight: 400;
+        color: $rust;
+      }
     }
   }
 
   @keyframes rise {
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    to { opacity: 1; transform: translateY(0); }
   }
 
-  .lede {
-    font-size: 18px;
-    line-height: 1.6;
-    color: $bone;
-    max-width: 540px;
-    margin-bottom: $s-7;
-    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.8);
+  .hero-lede {
+    position: absolute;
+    top: 56%;
+    right: $s-6;
+    width: 15rem;
+    z-index: 20;
     opacity: 0;
-    animation: fadeIn 1s $ease-out 0.6s forwards;
+    animation: fadeIn 1s $ease-out 0.7s forwards;
 
-    strong {
-      font-weight: 400;
+    @include mobile {
+      position: static;
+      width: 100%;
+      padding: 0 $s-5;
+      margin: $s-5 0;
+    }
+
+    p {
+      font-size: 14px;
+      line-height: 1.6;
       color: $bone;
+      opacity: 0.88;
+      margin: 0 0 $s-5;
+      text-shadow: 0 2px 16px rgba(0, 0, 0, 0.85);
+
+      strong { font-weight: 400; color: $bone; }
     }
   }
 
   @keyframes fadeIn {
-    to {
-      opacity: 0.9;
-    }
-  }
-
-  .hero-meta-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    gap: $s-6;
-    flex-wrap: wrap;
-    opacity: 0;
-    animation: fadeIn 1s $ease-out 0.8s forwards;
-  }
-
-  .meta {
-    display: flex;
-    gap: $s-7;
-    color: $bone;
-
-    @include mobile {
-      gap: $s-5;
-    }
-
-    div {
-      display: flex;
-      flex-direction: column;
-      gap: $s-1;
-    }
-
-    .num {
-      font-family: $serif;
-      font-size: 32px;
-      font-weight: 300;
-      letter-spacing: -0.02em;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
-    }
-
-    .lbl {
-      font-family: $mono;
-      font-size: 10px;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: $bone;
-      opacity: 0.65;
-    }
+    to { opacity: 1; }
   }
 
   .scroll-cue {
@@ -401,72 +605,100 @@ const underPhoto = photos.find((p) => p.id === '05')!;
     gap: $s-3;
     font-family: $mono;
     font-size: 11px;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.22em;
     text-transform: uppercase;
     color: $bone;
-    border: 1px solid rgba($bone, 0.3);
+    border: 1px solid rgba($bone, 0.35);
     padding: $s-3 $s-5;
     border-radius: 999px;
-    transition: all $dur-base $ease;
+    background: rgba($ink, 0.4);
     backdrop-filter: blur(8px);
-    background: rgba(10, 8, 7, 0.3);
+    transition: all $dur-base $ease;
+    pointer-events: auto;
 
-    .arrow {
-      transition: transform $dur-base $ease;
-    }
+    .arrow { transition: transform $dur-base $ease; }
 
     &:hover {
       border-color: $rust;
       color: $rust;
-      .arrow {
-        transform: translateY(4px);
-      }
+      .arrow { transform: translateY(4px); }
     }
   }
 
-  .hero-credit {
+  // ============================================================
+  // BOTTOM STAT STRAP
+  // ============================================================
+  .hero-strap {
     position: absolute;
-    top: 50%;
+    left: $s-6;
     right: $s-6;
-    z-index: 5;
-    transform: translateY(-50%) rotate(90deg);
-    transform-origin: right center;
+    bottom: $s-6;
+    z-index: 20;
     display: flex;
-    gap: $s-4;
-    align-items: baseline;
-    color: $bone;
-    opacity: 0.55;
-
-    .num {
-      font-family: $mono;
-      font-size: 10px;
-      letter-spacing: 0.25em;
-      text-transform: uppercase;
-    }
-    .title {
-      font-family: $serif;
-      font-size: 13px;
-      em {
-        font-style: italic;
-      }
-    }
+    justify-content: space-between;
+    align-items: flex-end;
+    border-top: 0.5px solid rgba($bone, 0.18);
+    padding-top: $s-3;
+    opacity: 0;
+    animation: fadeIn 1s $ease-out 0.9s forwards;
 
     @include mobile {
-      display: none;
+      position: static;
+      margin: $s-5 $s-5 0;
+      flex-direction: column;
+      gap: $s-4;
+      align-items: flex-start;
+    }
+
+    .stats {
+      display: flex;
+      gap: $s-7;
+      color: $bone;
+
+      @include mobile { gap: $s-5; }
+
+      div {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .lbl {
+        font-family: $mono;
+        font-size: 9px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        opacity: 0.55;
+      }
+      .num {
+        font-family: $serif;
+        font-size: 24px;
+        font-weight: 300;
+        letter-spacing: -0.02em;
+      }
+    }
+
+    .strap-meta {
+      font-family: $mono;
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: $bone;
+      opacity: 0.5;
     }
   }
 
-  @include mobile {
-    .hero {
-      min-height: 100svh;
+  // ============================================================
+  // REDUCED MOTION
+  // ============================================================
+  @media (prefers-reduced-motion: reduce) {
+    .frag, .hero-lede, .hero-strap, h1 .line {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
     }
-    .hero-content {
-      padding-bottom: $s-7;
-    }
-    .hero-meta-row {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: $s-4;
-    }
+    .frag-feather  { transform: rotate(-3deg) !important; }
+    .frag-pattern  { transform: rotate(2deg) !important; }
+    .frag-barcode  { transform: rotate(-1.5deg) !important; }
   }
 </style>
